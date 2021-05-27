@@ -72,6 +72,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -93,6 +95,18 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -143,16 +157,23 @@
     <ClCompile Include="Date.cpp" />
     <ClCompile Include="ics0025_coursework_2.cpp" />
     <ClCompile Include="Item.cpp" />
+    <ClCompile Include="PipeClient.cpp" />
     <ClCompile Include="RandomUtils.cpp" />
+    <ClCompile Include="ServerUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Data.h" />
     <ClInclude Include="Date.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="PipeClient.h" />
     <ClInclude Include="RandomUtils.h" />
+    <ClInclude Include="ServerUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Birds.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ICS0025PipeServer.exe" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

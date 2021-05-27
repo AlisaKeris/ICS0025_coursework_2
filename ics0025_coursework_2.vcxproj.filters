@@ -30,6 +30,12 @@
     <ClCompile Include="RandomUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ServerUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PipeClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Data.h">
@@ -44,10 +50,21 @@
     <ClInclude Include="RandomUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ServerUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PipeClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Birds.txt">
       <Filter>Resource Files</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ICS0025PipeServer.exe">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
