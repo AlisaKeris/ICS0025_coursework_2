@@ -13,7 +13,7 @@ void testEmpty() {
 	assert(data.CountItems() == 0);
 
 	std::cout << "** PASS **" << std::endl << std::endl;
-}e
+}
 
 /*
 Create object containing 300 items.
