@@ -13,9 +13,10 @@ private:
 	bool stoppedGracefully;
 	bool serverStarted;
 	bool verbose;
+	bool interactiveMode;
 public:
 	PipeClient(Data* data);
-	PipeClient(Data* data, bool verbose);
+	PipeClient(Data* data, bool verbose, bool interactiveMode);
 	void performOperation (std::string command);
 	int connectToNamedPipe(void);
 	void getItemFromPipe();

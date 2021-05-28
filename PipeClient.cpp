@@ -16,6 +16,7 @@
 PipeClient::PipeClient(Data* data)
 {
 	verbose = true;
+	interactiveMode = false;
 	hPipe = nullptr;
 	stoppedGracefully = true;
 	serverStarted = false;
@@ -23,9 +24,10 @@ PipeClient::PipeClient(Data* data)
 }
 
 
-PipeClient::PipeClient(Data* data, bool verbose)
+PipeClient::PipeClient(Data* data, bool verbose, bool interactiveMode)
 {
 	this->verbose = verbose;
+	this->interactiveMode = interactiveMode;
 	hPipe = nullptr;
 	stoppedGracefully = true;
 	serverStarted = false;
@@ -42,7 +44,14 @@ void PipeClient::performOperation(std::string command)
 		stop();
 	}
 	else if (command.compare("exit") == 0) {
-		disconnect();
+		if (serverStarted) {
+			disconnect();
+		}
+		if (interactiveMode) {
+			std::cout << std::endl << "Press any key to close...";
+			_getch();
+			PostMessage(GetConsoleWindow(), WM_CLOSE, 0, 0);
+		}
 	}
 	else if (command.compare("serveroff") == 0) {
 		ServerUtils::killServer();
@@ -53,14 +62,27 @@ void PipeClient::performOperation(std::string command)
 		serverStarted = true;
 	}
 	else if (command.compare("ready") == 0) {
-		for (int i = 0; i < 4; i++) {
-			// send "ready" and insert newly received item
-			getItemFromPipe();
+		if (!serverStarted) {
+			printf("ERROR: Not connected!\n\n");
+		}
+		else {
+			if (interactiveMode) {
+				while (true) {
+					getItemFromPipe();
+				}
+			}
+			else {
+				for (int i = 0; i < 4; i++) {
+					// send "ready" and insert newly received item
+					getItemFromPipe();
+				}
+			}
 		}
 	}
 	else {
 		std::cout << "Unknown command" << std::endl;
 	}
+	std::cout << std::endl << "Type a command >> ";
 }
 
 int PipeClient::connectToNamedPipe() {
@@ -127,7 +149,15 @@ void PipeClient::disconnect(void) {
 	serverStarted = false;
 	ServerUtils::killServer();
 	printf("DISCONNECTING FROM PIPE\n\nData Structure contents are:\n\n");
-	dataRef->PrintAll();
+	try
+	{
+		if (dataRef->CountItems() > 0) {
+			dataRef->PrintAll();
+		}
+	}
+	catch (const std::exception&)
+	{
+	}
 }
 
 void PipeClient::stop() {
@@ -169,6 +199,10 @@ void PipeClient::getItemFromPipe() {
 	DWORD  dwMode;
 	LPCSTR  lpszPipename = ICS0025_PIPENAME;
 
+	if (!serverStarted || stoppedGracefully) {
+		return;
+	}
+
 	// The pipe connected; change to message-read mode. 
 	dwMode = PIPE_READMODE_MESSAGE;
 	fSuccess = SetNamedPipeHandleState(
@@ -189,7 +223,12 @@ void PipeClient::getItemFromPipe() {
 		BOOL fSuccess;
 		DWORD cbWritten;
 		DWORD cbToWrite = (lstrlenA(lpvMessage) + 1) * sizeof(char);
-		//printf("Sending %d byte message: \"%s\"\n", cbToWrite, lpvMessage);
+		if (verbose)
+			printf("Sending %d byte message: \"%s\"\n", cbToWrite, lpvMessage);
+
+		if (!serverStarted || stoppedGracefully || hPipe == INVALID_HANDLE_VALUE) {
+			return;
+		}
 
 		fSuccess = WriteFile(
 			hPipe,                  // pipe handle 
@@ -215,14 +254,9 @@ void PipeClient::getItemFromPipe() {
 		TCHAR  chBuf[BUFSIZE];
 		TCHAR  peekBuf[BUFSIZE];
 
-		BOOL peek = PeekNamedPipe(
-			hPipe,
-			peekBuf,
-			BUFSIZE * sizeof(TCHAR),
-			bRead,
-			bAvail,
-			bLeft
-		);
+		if (!serverStarted || stoppedGracefully || hPipe == INVALID_HANDLE_VALUE) {
+			return;
+		} 
 
 		if (verbose)
 			printf("\nMessage sent to server, receiving reply as follows:\n");
@@ -244,7 +278,13 @@ void PipeClient::getItemFromPipe() {
 			temp[cbRead] = '\0';
 			itemString = std::string(temp);
 			 
-			this->dataRef->InsertItem(itemString);
+			try
+			{
+				this->dataRef->InsertItem(itemString);
+			}
+			catch (const std::exception&)
+			{
+			}
 		}
 
 	});

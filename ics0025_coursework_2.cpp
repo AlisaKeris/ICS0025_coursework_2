@@ -28,7 +28,7 @@ void runTestCase(std::string filename) {
 
 	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 } 
-  
+ 
 int main()
 {
 	if (AUTOMATED_TESTS) {
@@ -50,26 +50,19 @@ int main()
 		// Run normally as console app
 
 		Data data = Data();
-		PipeClient client = PipeClient(&data, false);
+		PipeClient client = PipeClient(&data, true, true);
 		std::string command;
-		while (true) {
-			std::cout << std::endl << "Type a command >> ";
-			std::cin >> command;
-			std::async(std::launch::async, [&client, command] {client.performOperation(command); });
+		std::thread cl;
 
-			if (command.compare("exit") == 0) {
-				std::cout << std::endl << "Press any key to close...";
-				_getch();
-				PostMessage(GetConsoleWindow(), WM_CLOSE, 0, 0);
-			}
+		std::cout << std::endl << "Type a command >> ";
+		while (true) {
+			std::cin >> command;
+			cl = std::thread([&client, command] {client.performOperation(command); });
+			cl.detach();
 		}
+		cl.join();
 
 	}
 
 }
-
-
-// TODO: Reading from and writing to server must be asynchronous
-// TODO: thread for listening to keyboard, non-blocking console input
-// client must obey exit at any moment??
 
