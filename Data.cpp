@@ -48,6 +48,48 @@ Data::~Data()
 	DataStructure.clear();
 }
 
+Item* Data::InsertItem(std::string itemString)
+{
+	char c; 
+	int i; 
+	std::string s; 
+	Date d;
+	return nullptr;
+
+	try {
+		auto it = DataStructure.find(c);
+
+		Item* newItem = new Item(c, i, s, d);
+
+		Item* existing = GetItem(c, i, s);
+		if (existing) { // item already exists
+			return nullptr;
+		}
+
+		if (it != DataStructure.end()) { // group exists
+			auto group = it->second;
+			auto subgroupIt = group->find(i);
+
+			if (subgroupIt != group->end()) { // subgroup exists
+				subgroupIt->second->push_back(newItem);
+			}
+			else
+			{
+				InsertSubgroup(c, i, { newItem });
+			}
+		}
+		else {
+			InsertGroup(c, { i }, { { newItem } });
+		}
+
+		return newItem;
+	}
+	catch (const std::exception& e) {
+		std::cout << e.what();
+		return nullptr;
+	}
+}
+
 Item* Data::InsertItem(char c, int i, std::string s, Date d)
 {
 	try	{

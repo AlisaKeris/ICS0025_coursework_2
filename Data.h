@@ -36,6 +36,7 @@ public:
 	Item* GetItem(char c, int i, std::string s);
 	void PrintItem(char c, int i, std::string s);
 
+	Item* InsertItem(std::string itemString); // overload to add items as string from pipe
 	Item* InsertItem(char c, int i, std::string s, Date d);
 	std::list<Item*>* InsertSubgroup(char s, int i, std::initializer_list<Item*> items);
 	std::map<int, std::list<Item*>*>* InsertGroup(char c, std::initializer_list<int> subgroups, std::initializer_list<std::initializer_list<Item*>> items);

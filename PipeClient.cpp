@@ -10,8 +10,6 @@
 
 int PipeClient::connectToNamedPipe() {
 
-	HANDLE hPipe;
-	LPCSTR  lpvMessage = "ready";
 	TCHAR  chBuf[BUFSIZE];
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
@@ -31,9 +29,10 @@ int PipeClient::connectToNamedPipe() {
 			0,              // default attributes 
 			NULL);          // no template file 
 
-	  // Break if the pipe handle is valid. 
-		if (hPipe != INVALID_HANDLE_VALUE)
+		// Break if the pipe handle is valid. 
+		if (hPipe != INVALID_HANDLE_VALUE) {
 			break;
+		}
 
 		// Exit if an error other than ERROR_PIPE_BUSY occurs. 
 		if (GetLastError() != ERROR_PIPE_BUSY)
@@ -47,8 +46,22 @@ int PipeClient::connectToNamedPipe() {
 		{
 			printf("Could not open pipe: 20 second wait timed out.");
 			return -1;
-		}
+		} 
 	}
+
+	return 0;
+}
+
+void PipeClient::disconnect(void) {
+	CloseHandle(hPipe);
+}
+
+void PipeClient::stop() {
+	LPCSTR  lpvMessage = "stop";
+	TCHAR  chBuf[BUFSIZE];
+	BOOL   fSuccess = FALSE;
+	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+	std::string itemString = "";
 
 	// The pipe connected; change to message-read mode. 
 	dwMode = PIPE_READMODE_MESSAGE;
@@ -60,7 +73,6 @@ int PipeClient::connectToNamedPipe() {
 	if (!fSuccess)
 	{
 		_tprintf(TEXT("SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError());
-		return -1;
 	}
 
 	// Send a message to the pipe server. 
@@ -77,35 +89,63 @@ int PipeClient::connectToNamedPipe() {
 	if (!fSuccess)
 	{
 		_tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
-		return -1;
+	}
+
+	printf("\nStop message sent to server, closing pipe.\n");
+	disconnect(); 
+
+}
+
+std::string PipeClient::getItemFromPipe() {
+	LPCSTR  lpvMessage = "ready";
+	TCHAR  chBuf[BUFSIZE];
+	BOOL   fSuccess = FALSE;
+	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+	LPCSTR  lpszPipename = ICS0025_PIPENAME;
+	std::string itemString = "";
+
+	// The pipe connected; change to message-read mode. 
+	dwMode = PIPE_READMODE_MESSAGE;
+	fSuccess = SetNamedPipeHandleState(
+		hPipe,    // pipe handle 
+		&dwMode,  // new pipe mode 
+		NULL,     // don't set maximum bytes 
+		NULL);    // don't set maximum time 
+	if (!fSuccess)
+	{
+		_tprintf(TEXT("SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError());
+		return itemString;
+	}
+
+	// Send a message to the pipe server. 
+	cbToWrite = (lstrlenA(lpvMessage) + 1) * sizeof(char);
+	printf("Sending %d byte message: \"%s\"\n", cbToWrite, lpvMessage);
+
+	fSuccess = WriteFile(
+		hPipe,                  // pipe handle 
+		lpvMessage,             // message 
+		cbToWrite,              // message length 
+		&cbWritten,             // bytes written 
+		NULL);                  // not overlapped 
+
+	if (!fSuccess)
+	{
+		_tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+		return itemString;
 	}
 
 	printf("\nMessage sent to server, receiving reply as follows:\n");
 
-	do
-	{
-		// Read from the pipe. 
-		fSuccess = ReadFile(
-			hPipe,    // pipe handle 
-			chBuf,    // buffer to receive reply 
-			BUFSIZE * sizeof(TCHAR),  // size of buffer 
-			&cbRead,  // number of bytes read 
-			NULL);    // not overlapped 
+	fSuccess = ReadFile(
+		hPipe,    // pipe handle 
+		chBuf,    // buffer to receive reply 
+		BUFSIZE * sizeof(TCHAR),  // size of buffer 
+		&cbRead,  // number of bytes read 
+		NULL);    // not overlapped  
 
-		if (!fSuccess && GetLastError() != ERROR_MORE_DATA) {
-			break;
-		}
+	if (fSuccess) { printf("\"%s\"\n", chBuf); }
 
-		printf("\"%s\"\n", chBuf);
-	} while (!fSuccess);  // repeat loop if ERROR_MORE_DATA 
+	// copy chBuf into itemString ??
 
-	if (!fSuccess)
-	{
-		_tprintf(TEXT("ReadFile from pipe failed. GLE=%d\n"), GetLastError());
-		return -1;
-	} 
-
-	CloseHandle(hPipe);
-
-	return 0;
+	return itemString;
 }

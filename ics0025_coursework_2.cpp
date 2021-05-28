@@ -8,15 +8,48 @@
 /*
   Switch on the server -> launch the client -> connect -> let to work a bit -> stop -> connect -> let to work a bit -> exit
 */
-void testCase1() {
+void testCase1() { 
 	std::cout << std::endl << "** Test Case 1 **" << std::endl;
+
+	// start server
 	ServerUtils::startServer();
 
+	Data data = Data();
+	data.InsertItem('A', 0, "itemA0", Date(1, 1, 2021));
+	
+	// connect
 	PipeClient client = PipeClient();
 	client.connectToNamedPipe();
+	
+	// work
+	std::string itemString;
+	for (int i = 0; i < 4; i++) {
+		// send "ready" and receive
+		itemString = client.getItemFromPipe();
+		// TODO: insert newly received item
+		data.InsertItem(itemString);
+	} 
+	// assert(data.CountItems() == 5);
 
+	// TODO: stop
+	/*client.stop();
+
+	// TODO: reconnect
+	client.connectToNamedPipe();
+
+	// work
+	for (int i = 0; i < 4; i++) {
+		// send "ready" and receive
+		itemString = client.getItemFromPipe();
+		// TODO: insert newly received item
+		data.InsertItem(itemString);
+	}
+	// assert(data.CountItems() == 9);
+
+	*/
+	client.disconnect();
 	ServerUtils::killServer();
-	std::cout << "** PASS **" << std::endl << std::endl;
+	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
 
 /*
@@ -25,9 +58,10 @@ void testCase1() {
 void testCase2() {
 	std::cout << std::endl << "** Test Case 2 **" << std::endl; 
 	
-	assert(false);
+	PipeClient client = PipeClient();
+	client.connectToNamedPipe(); // should indicate pipe could not be opened
 
-	std::cout << "** PASS **" << std::endl << std::endl;
+	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
 
 /*
@@ -35,10 +69,30 @@ void testCase2() {
 */
 void testCase3() {
 	std::cout << std::endl << "** Test Case 3 **" << std::endl;
-	
-	assert(false);
 
-	std::cout << "** PASS **" << std::endl << std::endl;
+	Data data = Data();
+
+	// start server
+	ServerUtils::startServer();
+	
+	// connect
+	PipeClient client = PipeClient();
+	client.connectToNamedPipe();
+
+	// work
+	std::string itemString;
+	for (int i = 0; i < 4; i++) {
+		itemString = client.getItemFromPipe();
+		data.InsertItem(itemString);
+	}
+	// assert(data.CountItems() == 4);
+	
+	// switch off server
+	ServerUtils::killServer();
+
+	client.connectToNamedPipe(); // should indicate error
+
+	std::cout << std::endl<< "** PASS **" << std::endl << std::endl;
 }
 
 /*
@@ -50,7 +104,7 @@ void testCase4() {
 
 	assert(false);
 
-	std::cout << "** PASS **" << std::endl << std::endl;
+	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
 
 int main()
