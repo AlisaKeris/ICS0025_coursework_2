@@ -18,6 +18,7 @@ PipeClient::PipeClient(Data* data)
 	verbose = true;
 	hPipe = nullptr;
 	stoppedGracefully = true;
+	serverStarted = false;
 	dataRef = data;
 }
 
@@ -27,12 +28,13 @@ PipeClient::PipeClient(Data* data, bool verbose)
 	this->verbose = verbose;
 	hPipe = nullptr;
 	stoppedGracefully = true;
+	serverStarted = false;
 	dataRef = data;
 }
 
 void PipeClient::performOperation(std::string command)
 {
-	std::cout << "Main thread received command: " << command << std::endl;
+	std::cout << std::endl << "Main thread received command: " << command << std::endl;
 	if (command.compare("connect") == 0) {
 		connectToNamedPipe();
 	}
@@ -44,9 +46,11 @@ void PipeClient::performOperation(std::string command)
 	}
 	else if (command.compare("serveroff") == 0) {
 		ServerUtils::killServer();
+		serverStarted = false;
 	}
 	else if (command.compare("serveron") == 0) {
 		ServerUtils::startServer();
+		serverStarted = true;
 	}
 	else if (command.compare("ready") == 0) {
 		for (int i = 0; i < 4; i++) {
@@ -68,10 +72,16 @@ int PipeClient::connectToNamedPipe() {
 
 	printf("\nCONNECTING TO PIPE\n");
 
-	if (stoppedGracefully) {
-		ServerUtils::startServer();
+	if (serverStarted) {
+		printf("ERROR: Already connected!\n\n");
+		return -1;
 	}
 
+	if (stoppedGracefully) {
+		ServerUtils::startServer();
+		serverStarted = true;
+	}
+	
 	// Try to open a named pipe; wait for it, if necessary. 
 	while (1)
 	{
@@ -93,15 +103,15 @@ int PipeClient::connectToNamedPipe() {
 
 		// Exit if an error other than ERROR_PIPE_BUSY occurs. 
 		if (GetLastError() != ERROR_PIPE_BUSY)
-		{
-			_tprintf(TEXT("Could not open pipe. GLE=%d\n"), GetLastError());
+		{ 
+			printf("ERROR: Could not open pipe. Please start the Server with command \"serveron\"\n\n");
 			return -1;
 		}
 
 		// All pipe instances are busy, so wait for 20 seconds. 
 		if (!WaitNamedPipeA(lpszPipename, 20000))
 		{
-			printf("Could not open pipe: 20 second wait timed out.");
+			printf("ERROR: Could not open pipe. Please start the Server with command \"serveron\"\n\n");
 			return -1;
 		}
 	}
@@ -110,8 +120,11 @@ int PipeClient::connectToNamedPipe() {
 }
 
 void PipeClient::disconnect(void) {
-	CloseHandle(hPipe);
+	if (serverStarted || !stoppedGracefully) {
+		CloseHandle(hPipe);
+	}
 	stoppedGracefully = true;
+	serverStarted = false;
 	ServerUtils::killServer();
 	printf("DISCONNECTING FROM PIPE\n\nData Structure contents are:\n\n");
 	dataRef->PrintAll();
@@ -122,7 +135,11 @@ void PipeClient::stop() {
 	TCHAR  chBuf[BUFSIZE];
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
-	std::string itemString = "";
+
+	if (!serverStarted) {
+		printf("ERROR: Already stopped!\n\n");
+		return;
+	}
 
 	// Send stop message
 	cbToWrite = (lstrlenA(lpvMessage) + 1) * sizeof(char);
@@ -138,7 +155,7 @@ void PipeClient::stop() {
 
 	if (!fSuccess)
 	{
-		_tprintf(TEXT("Error trying to stop - WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+		_tprintf(TEXT("ERROR: trying to stop - WriteFile to pipe failed. GLE=%d\n"), GetLastError());
 		return;
 	}
 
@@ -161,7 +178,7 @@ void PipeClient::getItemFromPipe() {
 		NULL);    // don't set maximum time 
 	if (!fSuccess)
 	{
-		_tprintf(TEXT("SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError());
+		_tprintf(TEXT("ERROR: SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError());
 		return;
 	}
 
@@ -183,7 +200,7 @@ void PipeClient::getItemFromPipe() {
 
 		if (!fSuccess)
 		{
-			_tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+			_tprintf(TEXT("ERROR: WriteFile to pipe failed. GLE=%d\n"), GetLastError());
 			return;
 		}
 	});

@@ -10,7 +10,8 @@ class PipeClient {
 private:
 	HANDLE hPipe;
 	Data* dataRef;
-	bool stoppedGracefully = true;
+	bool stoppedGracefully;
+	bool serverStarted;
 	bool verbose;
 public:
 	PipeClient(Data* data);

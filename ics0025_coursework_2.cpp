@@ -67,3 +67,9 @@ int main()
 	}
 
 }
+
+
+// TODO: Reading from and writing to server must be asynchronous
+// TODO: thread for listening to keyboard, non-blocking console input
+// client must obey exit at any moment??
+

@@ -1,0 +1,8 @@
+connect
+connect
+ready
+connect
+ready
+stop
+stop
+exit
