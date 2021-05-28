@@ -61,6 +61,18 @@
     <Text Include="Birds.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="TestCase1.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="TestCase2.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="TestCase3.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="TestCase4.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="ICS0025PipeServer.exe">

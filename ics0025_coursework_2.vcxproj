@@ -171,6 +171,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Birds.txt" />
+    <Text Include="TestCase1.txt" />
+    <Text Include="TestCase2.txt" />
+    <Text Include="TestCase3.txt" />
+    <Text Include="TestCase4.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ICS0025PipeServer.exe" />

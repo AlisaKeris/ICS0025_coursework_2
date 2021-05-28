@@ -5,6 +5,8 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 
 Data::Data()
 {
@@ -54,6 +56,15 @@ Item* Data::InsertItem(std::string itemString)
 	int i; 
 	std::string s; 
 	Date d;
+
+    std::string mon;
+	int day,year;
+	
+	itemString = "A 2 <Great Crested Grebe> 29 Nov 2018";
+	std::stringstream ss(itemString);
+	ss >> c >> i >> s >> day >> mon >> year;
+	//std::cout << v1 << " " << v2 << " " << var << std::endl;
+
 	return nullptr;
 
 	try {

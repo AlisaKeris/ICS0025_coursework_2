@@ -1,54 +1,36 @@
 #include <iostream>
 #include <assert.h>
+#include <fstream>
 
 #include "Data.h"
 #include "ServerUtils.h"
 #include "PipeClient.h"
+#include <thread>
+#include <future>
+#include <conio.h>
+
+#define AUTO_TEST true
 
 /*
   Switch on the server -> launch the client -> connect -> let to work a bit -> stop -> connect -> let to work a bit -> exit
 */
-void testCase1() { 
+void testCase1() {
 	std::cout << std::endl << "** Test Case 1 **" << std::endl;
 
-	// start server
-	ServerUtils::startServer();
-
+	// setup
 	Data data = Data();
-	data.InsertItem('A', 0, "itemA0", Date(1, 1, 2021));
-	
-	// connect
-	PipeClient client = PipeClient();
-	client.connectToNamedPipe();
-	
-	// work
-	std::string itemString;
-	for (int i = 0; i < 4; i++) {
-		// send "ready" and receive
-		itemString = client.getItemFromPipe();
-		// TODO: insert newly received item
-		data.InsertItem(itemString);
-	} 
-	// assert(data.CountItems() == 5);
+	PipeClient client = PipeClient(&data);
 
-	// TODO: stop
-	/*client.stop();
-
-	// TODO: reconnect
-	client.connectToNamedPipe();
-
-	// work
-	for (int i = 0; i < 4; i++) {
-		// send "ready" and receive
-		itemString = client.getItemFromPipe();
-		// TODO: insert newly received item
-		data.InsertItem(itemString);
+	// read test case commands from file
+	std::ifstream infile("TestCase1.txt");
+	std::string command;
+	while (infile >> command)
+	{
+		client.performOperation(command);
 	}
-	// assert(data.CountItems() == 9);
 
-	*/
-	client.disconnect();
-	ServerUtils::killServer();
+	//assert(data.CountItems() == 8); // 8 should have been created
+
 	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
 
@@ -56,10 +38,21 @@ void testCase1() {
   Launch the client -> exit
 */
 void testCase2() {
-	std::cout << std::endl << "** Test Case 2 **" << std::endl; 
-	
-	PipeClient client = PipeClient();
-	client.connectToNamedPipe(); // should indicate pipe could not be opened
+	std::cout << std::endl << "** Test Case 2 **" << std::endl;
+
+	// setup
+	Data data = Data();
+	PipeClient client = PipeClient(&data);
+
+	// read test case commands from file
+	std::ifstream infile("TestCase2.txt");
+	std::string command;
+	while (infile >> command)
+	{
+		client.performOperation(command);
+	}
+
+	assert(data.CountItems() == 0); // no data should be created
 
 	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
@@ -70,33 +63,25 @@ void testCase2() {
 void testCase3() {
 	std::cout << std::endl << "** Test Case 3 **" << std::endl;
 
+	// setup
 	Data data = Data();
+	PipeClient client = PipeClient(&data);
 
-	// start server
-	ServerUtils::startServer();
-	
-	// connect
-	PipeClient client = PipeClient();
-	client.connectToNamedPipe();
-
-	// work
-	std::string itemString;
-	for (int i = 0; i < 4; i++) {
-		itemString = client.getItemFromPipe();
-		data.InsertItem(itemString);
+	// read test case commands from file
+	std::ifstream infile("TestCase3.txt");
+	std::string command;
+	while (infile >> command)
+	{
+		client.performOperation(command);
 	}
-	// assert(data.CountItems() == 4);
-	
-	// switch off server
-	ServerUtils::killServer();
 
-	client.connectToNamedPipe(); // should indicate error
+	//assert(data.CountItems() == 4); // 4 should have been created
 
-	std::cout << std::endl<< "** PASS **" << std::endl << std::endl;
+	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
 
 /*
-  Switch on the server -> launch the client -> connect(error?) -> connect -> let to work a bit -> connect(error) 
+  Switch on the server -> launch the client -> connect(error?) -> connect -> let to work a bit -> connect(error)
   -> let to work a bit -> stop -> stop(error) -> exit
 */
 void testCase4() {
@@ -107,10 +92,36 @@ void testCase4() {
 	std::cout << std::endl << "** PASS **" << std::endl << std::endl;
 }
 
+static std::string getAnswer()
+{
+	std::string answer;
+	std::cin >> answer;
+	return answer;
+}
+
 int main()
 {
-	testCase1();
-	//testCase2();
-	//testCase3();
-	//testCase4();
+	if (AUTO_TEST) {
+		testCase1();
+		testCase2();
+		testCase3();
+		//testCase4();
+	}
+	else {
+		Data data = Data();
+		PipeClient client = PipeClient(&data, false);
+		std::string command;
+		while (true) {
+			std::cout << std::endl << "Type a command >> ";
+			std::cin >> command;
+			std::async(std::launch::async, [&client, command] {client.performOperation(command); });
+
+			if (command.compare("exit")==0) {
+				std::cout << std::endl << "Press any key to close...";
+				_getch();
+				PostMessage(GetConsoleWindow(), WM_CLOSE, 0, 0);
+			}
+		} 
+	}
+
 }
