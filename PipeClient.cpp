@@ -33,14 +33,16 @@ PipeClient::PipeClient(Data* data, bool verbose)
 void PipeClient::performOperation(std::string command)
 {
 	std::cout << "Main thread received command: " << command << std::endl;
-	if (command.compare("connect")==0) {
+	if (command.compare("connect") == 0) {
 		connectToNamedPipe();
 	}
 	else if (command.compare("stop") == 0) {
 		stop();
-	} else if (command.compare("exit") == 0) {
+	}
+	else if (command.compare("exit") == 0) {
 		disconnect();
-	} else if (command.compare("serveroff") == 0) {
+	}
+	else if (command.compare("serveroff") == 0) {
 		ServerUtils::killServer();
 	}
 	else if (command.compare("serveron") == 0) {
@@ -77,7 +79,7 @@ int PipeClient::connectToNamedPipe() {
 			lpszPipename,   // pipe name 
 			GENERIC_READ |  // read and write access 
 			GENERIC_WRITE,
-			FILE_SHARE_WRITE|FILE_SHARE_READ,   // no sharing 
+			FILE_SHARE_WRITE | FILE_SHARE_READ,
 			NULL,           // default security attributes
 			OPEN_EXISTING,  // opens existing pipe 
 			FILE_FLAG_OVERLAPPED,     // default attributes 
@@ -101,7 +103,7 @@ int PipeClient::connectToNamedPipe() {
 		{
 			printf("Could not open pipe: 20 second wait timed out.");
 			return -1;
-		} 
+		}
 	}
 
 	return 0;
@@ -138,18 +140,17 @@ void PipeClient::stop() {
 	{
 		_tprintf(TEXT("Error trying to stop - WriteFile to pipe failed. GLE=%d\n"), GetLastError());
 		return;
-	}  
+	}
 
 	printf("\nStop message sent to server, closing pipe.\n");
 	disconnect();
 }
 
 void PipeClient::getItemFromPipe() {
-	
+
 	BOOL   fSuccess = FALSE;
 	DWORD  dwMode;
 	LPCSTR  lpszPipename = ICS0025_PIPENAME;
-	std::string itemString = "";
 
 	// The pipe connected; change to message-read mode. 
 	dwMode = PIPE_READMODE_MESSAGE;
@@ -188,13 +189,25 @@ void PipeClient::getItemFromPipe() {
 	});
 	writeThread.join();
 
+
 	// TODO: separate thread
 	std::thread readThread([this]() {
 		BOOL fSuccess;
 		DWORD cbRead;
+		LPDWORD bRead = 0, bAvail = 0, bLeft = 0;
 		TCHAR  chBuf[BUFSIZE];
+		TCHAR  peekBuf[BUFSIZE];
 
-		if(verbose)
+		BOOL peek = PeekNamedPipe(
+			hPipe,
+			peekBuf,
+			BUFSIZE * sizeof(TCHAR),
+			bRead,
+			bAvail,
+			bLeft
+		);
+
+		if (verbose)
 			printf("\nMessage sent to server, receiving reply as follows:\n");
 
 		fSuccess = ReadFile(
@@ -204,12 +217,21 @@ void PipeClient::getItemFromPipe() {
 			&cbRead,  // number of bytes read 
 			NULL);    // not overlapped  
 
-		if (verbose && fSuccess) { printf("\"%s\"\n", chBuf); }
-		
+		if (fSuccess) {
+			if (verbose)
+				printf("\"%s\" - bytes read: %i\n", chBuf, cbRead);
+			std::string itemString;
+			char temp[BUFSIZE];
+
+			strncpy_s(temp, (const char*) chBuf, cbRead);
+			temp[cbRead] = '\0';
+			itemString = std::string(temp);
+			 
+			this->dataRef->InsertItem(itemString);
+		}
+
 	});
 	readThread.join();
 
-	// TODO: join
-	dataRef->InsertItem(itemString);
 	return;
 }

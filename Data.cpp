@@ -52,53 +52,33 @@ Data::~Data()
 
 Item* Data::InsertItem(std::string itemString)
 {
-	char c; 
-	int i; 
-	std::string s; 
-	Date d;
+	char _groupName; 
+	int _subgroup; 
+	std::string _name; 
+	Date _date;
 
+	// Parse the string received from server
     std::string mon;
 	int day,year;
 	
-	itemString = "A 2 <Great Crested Grebe> 29 Nov 2018";
 	std::stringstream ss(itemString);
-	ss >> c >> i >> s >> day >> mon >> year;
-	//std::cout << v1 << " " << v2 << " " << var << std::endl;
+	ss >> _groupName >> _subgroup;
 
-	return nullptr;
+	size_t nameDelimiterStartPos = itemString.find('<') + 1;
+	size_t nameDelimiterEndPos = itemString.find('>') - (itemString.find('<') + 1);
+	_name = itemString.substr(nameDelimiterStartPos, nameDelimiterEndPos);
 
-	try {
-		auto it = DataStructure.find(c);
+	size_t dateStartPos = itemString.find('>') + 1;
+	size_t dateEndPos = itemString.length() - (itemString.find('>') + 1);
+	std::stringstream dateSS(itemString.substr(dateStartPos, dateEndPos));
+	dateSS >> day >> mon >> year;
 
-		Item* newItem = new Item(c, i, s, d);
+	// find number of month by name
+	int monthNum=1;
+	_date = Date(day, monthNum, year);
 
-		Item* existing = GetItem(c, i, s);
-		if (existing) { // item already exists
-			return nullptr;
-		}
-
-		if (it != DataStructure.end()) { // group exists
-			auto group = it->second;
-			auto subgroupIt = group->find(i);
-
-			if (subgroupIt != group->end()) { // subgroup exists
-				subgroupIt->second->push_back(newItem);
-			}
-			else
-			{
-				InsertSubgroup(c, i, { newItem });
-			}
-		}
-		else {
-			InsertGroup(c, { i }, { { newItem } });
-		}
-
-		return newItem;
-	}
-	catch (const std::exception& e) {
-		std::cout << e.what();
-		return nullptr;
-	}
+	// Perform insert normally
+	return InsertItem(_groupName, _subgroup, _name, _date);
 }
 
 Item* Data::InsertItem(char c, int i, std::string s, Date d)

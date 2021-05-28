@@ -20,7 +20,7 @@ Date::Date(int d, int m, int y)
 	SetYear(y);
 	SetMonth(m);
 	SetDay(d);
-}
+} 
 
 Date::Date(const Date& Original)
 { // copy constructor
