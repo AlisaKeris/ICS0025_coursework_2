@@ -7,7 +7,7 @@
 - By default, running the application runs the tests automatically, and then exits.
 
 ## Manual test
-- To execute the application in interactive way (that lets you type the commands yourself), just change this in line 12 of the file `ics0025_coursework_2.cpp`, from this:
+- To execute the application in interactive way (that lets you type the commands yourself and verify non-blocking behavior), just change this in line 12 of the file `ics0025_coursework_2.cpp`, from this:
 
     ```cpp
     #define AUTOMATED_TESTS true
